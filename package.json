@@ -1,0 +1,46 @@
+{
+  "name": "sma-platform",
+  "version": "1.0.0",
+  "description": "Social Media Automation Platform",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --mac"
+  },
+  "build": {
+    "appId": "com.sma.platform",
+    "productName": "SMA Platform",
+    "icon": "build/icon",
+    "directories": { "output": "dist" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
+    }
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "googleapis": "^140.0.0",
+    "instagram-private-api": "^1.45.3",
+    "nodemailer": "^6.9.13",
+    "qrcode": "^1.5.3",
+    "whatsapp-web.js": "^1.23.0",
+    "csv-parse": "^5.5.5",
+    "phone": "^3.1.42"
+  },
+  "devDependencies": {
+    "electron": "^29.1.0",
+    "electron-builder": "^24.13.3"
+  }
+}
