@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SMA Platform</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d1a;--surface:#16162a;--surface2:#1e1e38;--border:#2a2a50;
+  --accent:#7c3aed;--accent2:#2563eb;--green:#22c55e;--red:#ef4444;
+  --yellow:#eab308;--text:#e2e2f0;--muted:#888;--r:10px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg);color:var(--text);height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;-webkit-app-region:drag}
+.titlebar{height:38px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;flex-shrink:0;
+  font-size:.82rem;font-weight:600;color:#fff}
+.titlebar span{background:linear-gradient(135deg,#a78bfa,#60a5fa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.layout{display:flex;flex:1;overflow:hidden;-webkit-app-region:no-drag}
+/* Sidebar */
+.sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);
+  padding:12px 0;flex-shrink:0;overflow-y:auto}
+.nav{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;
+  color:var(--muted);font-size:.84rem;border-left:3px solid transparent;transition:.15s}
+.nav:hover{color:var(--text);background:var(--surface2)}
+.nav.active{color:#fff;border-left-color:var(--accent);background:var(--surface2)}
+.nav-icon{font-size:.95rem;width:18px;text-align:center}
+.nav-section{padding:12px 16px 4px;font-size:.68rem;text-transform:uppercase;
+  letter-spacing:.08em;color:#555;font-weight:600}
+/* Main */
+.main{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}.page.active{display:block}
+h1{font-size:1.35rem;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.83rem;margin-bottom:20px}
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-bottom:14px}
+.card-title{font-weight:600;font-size:.9rem;margin-bottom:14px;color:#fff}
+/* Platform rows */
+.plat-row{display:flex;align-items:center;justify-content:space-between;
+  padding:11px 13px;background:var(--surface2);border-radius:8px;
+  border:1px solid var(--border);margin-bottom:9px}
+.plat-left{display:flex;align-items:center;gap:10px}
+.plat-icon{font-size:1.2rem}
+.plat-name{font-weight:600;font-size:.87rem}
+.plat-note{font-size:.72rem;color:var(--muted);margin-top:1px}
+.plat-status{font-size:.7rem;margin-top:2px}
+.status-ok{color:var(--green)}.status-warn{color:var(--yellow)}.status-err{color:var(--red)}
+/* Toggle */
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:22px;
+  cursor:pointer;transition:.2s}
+.slider::before{content:"";position:absolute;width:16px;height:16px;
+  left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.slider{background:var(--accent)}
+input:checked+.slider::before{transform:translateX(18px)}
+/* Language grid */
+.lang-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lang-btn{padding:8px 4px;border:1px solid var(--border);border-radius:7px;
+  background:var(--surface2);color:var(--muted);cursor:pointer;
+  font-size:.78rem;text-align:center;transition:.15s}
+.lang-btn:hover{border-color:var(--accent);color:var(--text)}
+.lang-btn.sel{border-color:var(--accent);background:rgba(124,58,237,.15);color:#fff}
+/* Form */
+.fg{margin-bottom:13px}
+label.fl{display:block;font-size:.73rem;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+input[type=text],input[type=password],input[type=email],textarea,select{
+  width:100%;padding:9px 12px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:7px;color:var(--text);
+  font-size:.85rem;outline:none;transition:.15s;font-family:inherit}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:90px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Buttons */
+.btn{padding:9px 18px;border:none;border-radius:7px;font-size:.84rem;
+  font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-p{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-p:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.btn-p:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-o{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-o:hover{border-color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:.78rem}
+/* File drop */
+.drop{border:2px dashed var(--border);border-radius:8px;padding:20px;
+  text-align:center;color:var(--muted);font-size:.82rem;cursor:pointer;transition:.15s}
+.drop:hover,.drop.drag{border-color:var(--accent);color:var(--text)}
+.drop.ok{border-color:var(--green);color:var(--green)}
+input[type=file]{display:none}
+/* Progress */
+.progress-wrap{margin-top:12px;display:none}
+.progress-wrap.show{display:block}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:3px;transition:width .3s;width:0}
+.progress-text{font-size:.78rem;color:var(--muted)}
+/* Stats */
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.stat{background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:9px 14px;text-align:center;min-width:80px}
+.stat-v{font-size:1.3rem;font-weight:700;color:#fff}
+.stat-l{font-size:.68rem;color:var(--muted);margin-top:1px}
+/* QR modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:100;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:28px;text-align:center;max-width:320px}
+.modal h2{margin-bottom:8px}
+.modal p{color:var(--muted);font-size:.83rem;margin-bottom:16px;line-height:1.5}
+.qr-img{width:220px;height:220px;border-radius:8px;margin:0 auto 16px;
+  background:var(--surface2);display:flex;align-items:center;justify-content:center}
+.qr-img img{width:100%;border-radius:8px}
+/* Info box */
+.info{padding:11px 13px;border-radius:7px;font-size:.8rem;margin-bottom:12px;line-height:1.5}
+.info-blue{background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#93c5fd}
+.info-yellow{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:var(--yellow)}
+.info-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green)}
+.info-red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+/* Badge */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:600}
+.badge-p{background:rgba(124,58,237,.15);color:#a78bfa}
+.badge-g{background:rgba(34,197,94,.15);color:var(--green)}
+.badge-r{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-y{background:rgba(234,179,8,.15);color:var(--yellow)}
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;padding:11px 18px;
+  font-size:.82rem;z-index:200;transform:translateY(60px);opacity:0;transition:.25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+/* Spinner */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:.8rem}
+.tbl th{padding:6px 8px;text-align:left;color:var(--muted);font-size:.7rem;
+  text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--border)}
+.hidden{display:none!important}
+.flex-gap{display:flex;gap:8px;align-items:center}
+a{color:#60a5fa}
+</style>
+</head>
+<body>
+
+<!-- Title bar -->
+<div class="titlebar"><span>SMA Platform</span>&nbsp;— Social Media Automation</div>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="nav-section">Campaigns</div>
+  <div class="nav active" onclick="nav('whatsapp',this)"><span class="nav-icon">💬</span>WhatsApp</div>
+  <div class="nav" onclick="nav('gmail',this)"><span class="nav-icon">📧</span>Gmail</div>
+  <div class="nav" onclick="nav('youtube',this)"><span class="nav-icon">▶️</span>YouTube</div>
+  <div class="nav" onclick="nav('instagram',this)"><span class="nav-icon">📸</span>Instagram</div>
+  <div class="nav" onclick="nav('imessage',this)"><span class="nav-icon">💬</span>iMessage</div>
+  <div class="nav-section">App</div>
+  <div class="nav" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
+  <div class="nav" onclick="nav('contacts',this)"><span class="nav-icon">👥</span>Contacts</div>
+</nav>
+
+<!-- Pages -->
+<main class="main">
+
+<!-- ── WHATSAPP ── -->
+<div class="page active" id="page-whatsapp">
+  <h1>WhatsApp Campaign</h1>
+  <p class="subtitle">Recipients choose their own language and format before receiving your message.</p>
+
+  <!-- Method selector -->
+  <div class="card">
+    <div class="card-title">Connection method</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div id="method-qr-btn" onclick="selectWAMethod('qr')"
+        style="padding:14px;border-radius:8px;border:2px solid var(--accent);background:rgba(124,58,237,.1);cursor:pointer">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:4px">QR Code</div>
+        <div style="font-size:.75rem;color:var(--muted)">Free. Scan with your phone like WhatsApp Web. Uses your personal number. Against WhatsApp ToS — risk of account ban on heavy use.</div>
+      </div>
+      <div id="method-api-btn" onclick="selectWAMethod('api')"
+        style="padding:14px;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:4px">Business API <span class="badge badge-g">Recommended</span></div>
+        <div style="font-size:.75rem;color:var(--muted)">~$0.005/msg in India. Official Meta API. No ban risk. Needs a separate number + free Meta Business account.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR method -->
+  <div id="wa-qr-section">
+    <div class="card">
+      <div class="card-title">Connect via QR</div>
+      <div id="wa-disconnected">
+        <div class="info info-yellow" style="margin-bottom:12px">
+          Your personal WhatsApp account may get banned if you send bulk messages. Use a spare number if possible.
+        </div>
+        <button class="btn btn-p" onclick="waConnect()">Connect WhatsApp</button>
+      </div>
+      <div id="wa-connected" class="hidden">
+        <div class="info info-green" style="margin-bottom:10px">WhatsApp connected and ready.</div>
+        <button class="btn btn-o btn-sm" onclick="waDisconnect()">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business API method -->
+  <div id="wa-api-section" class="hidden">
+    <div class="card">
+      <div class="card-title">Business API setup</div>
+      <div class="info info-blue" style="margin-bottom:14px">
+        <strong>One-time setup (~15 mins):</strong><br>
+        1. Go to <a href="#" onclick="openLink('https://developers.facebook.com')">developers.facebook.com</a> → Create App → Business<br>
+        2. Add WhatsApp product → note your Phone Number ID<br>
+        3. Business Settings → System Users → create user → generate token (no expiry)<br>
+        4. Register a phone number (must not be on personal WhatsApp app)<br>
+        5. Paste the credentials below
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label class="fl">Phone Number ID</label>
+          <input type="text" id="wa-phone-id" placeholder="1234567890"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Permanent Access Token</label>
+          <input type="password" id="wa-token" placeholder="EAAxxxxx…"/>
+        </div>
+      </div>
+      <div class="flex-gap">
+        <button class="btn btn-p btn-sm" onclick="waBusinessTest()">Test connection</button>
+        <span id="wa-api-status" style="font-size:.78rem"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="card">
+    <div class="card-title">How recipients experience it</div>
+    <div style="display:flex;flex-direction:column;gap:7px;font-size:.82rem;color:var(--muted)">
+      <div><span class="badge badge-p">1</span>&nbsp; New contact receives a language menu — they pick English, Hindi, Tamil, Telugu, or Kannada</div>
+      <div><span class="badge badge-p">2</span>&nbsp; They pick Text or Voice audio</div>
+      <div><span class="badge badge-p">3</span>&nbsp; Your message arrives translated into their language in their chosen format</div>
+      <div><span class="badge badge-g">↩</span>&nbsp; <strong style="color:var(--text)">Returning contacts skip the menu</strong> — message arrives immediately in their saved preference</div>
+    </div>
+  </div>
+
+  <!-- Compose -->
+  <div class="card">
+    <div class="card-title">Compose & Send</div>
+    <div class="fg">
+      <label class="fl">Your message (write in English)</label>
+      <textarea id="wa-msg" placeholder="Type your message here. It will be translated for each recipient automatically."></textarea>
+    </div>
+    <div class="fg">
+      <label class="fl">Contacts CSV</label>
+      <div class="drop" id="wa-drop" onclick="openCSV('wa')">
+        Click to choose a CSV file — needs a <strong>phone</strong> column<br>
+        <span style="font-size:.75rem;margin-top:4px;display:block">Numbers are cleaned automatically (9876543210 → +919876543210)</span>
+      </div>
+    </div>
+    <div id="wa-preview" class="hidden info info-blue" style="margin-bottom:12px"></div>
+    <button class="btn btn-p" id="wa-send" onclick="waSend()">Send Campaign</button>
+    <div class="progress-wrap" id="wa-progress">
+      <div class="progress-bar"><div class="progress-fill" id="wa-fill"></div></div>
+      <div class="progress-text" id="wa-prog-text">Starting…</div>
+    </div>
+    <div class="stats hidden" id="wa-stats"></div>
+  </div>
+</div>
+
+<!-- ── GMAIL ── -->
+<div class="page" id="page-gmail">
+  <h1>Gmail Campaign</h1>
+  <p class="subtitle">Send emails from your Gmail account. If TTS is on, an audio file is attached.</p>
+
+  <div class="card">
+    <div class="card-title">Gmail account</div>
+    <div class="info info-blue" style="margin-bottom:12px">
+      Use a Gmail <strong>App Password</strong>, not your regular password.<br>
+      Go to <a href="#" onclick="openExternal('https://myaccount.google.com/apppasswords')">myaccount.google.com/apppasswords</a> → create one for "Mail".
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label class="fl">Gmail address</label>
+        <input type="email" id="g-email" placeholder="you@gmail.com"/>
+      </div>
+      <div class="fg">
+        <label class="fl">App password</label>
+        <input type="password" id="g-pass" placeholder="xxxx xxxx xxxx xxxx"/>
+      </div>
+    </div>
+    <button class="btn btn-o btn-sm" onclick="gmailTest()">Test connection</button>
+    <span id="g-test-result" style="font-size:.78rem;margin-left:10px"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Compose</div>
+    <div class="fg"><label class="fl">Subject</label><input type="text" id="g-subject" placeholder="Email subject"/></div>
+    <div class="fg"><label class="fl">Body</label><textarea id="g-body" placeholder="Email body…"></textarea></div>
+    <div class="fg">
+      <label class="fl">Contacts CSV</label>
+      <div class="drop" id="gmail-drop" onclick="openCSV('gmail')">Click to choose a CSV file — needs an <strong>email</strong> column</div>
+    </div>
+    <div id="gmail-preview" class="hidden info info-blue" style="margin-bottom:12px"></div>
+    <button class="btn btn-p" id="g-send" onclick="gmailSend()" disabled>Send Campaign</button>
+    <div class="progress-wrap" id="gmail-progress">
+      <div class="progress-bar"><div class="progress-fill" id="gmail-fill"></div></div>
+      <div class="progress-text" id="gmail-prog-text"></div>
+    </div>
+    <div class="stats hidden" id="gmail-stats"></div>
+  </div>
+</div>
+
+<!-- ── YOUTUBE ── -->
+<div class="page" id="page-youtube">
+  <h1>YouTube</h1>
+  <p class="subtitle">Upload videos or post community updates to your channel.</p>
+
+  <div class="card">
+    <div class="card-title">Connect YouTube</div>
+    <div class="info info-yellow" style="margin-bottom:12px">
+      One-time setup: create a free OAuth client ID at
+      <a href="#" onclick="openExternal('https://console.cloud.google.com')">console.cloud.google.com</a>
+      → APIs & Services → Credentials → Create OAuth 2.0 Client ID (Desktop app).
+    </div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Client ID</label><input type="text" id="yt-id" placeholder="xxxxx.apps.googleusercontent.com"/></div>
+      <div class="fg"><label class="fl">Client Secret</label><input type="password" id="yt-secret" placeholder="GOCSPX-…"/></div>
+    </div>
+    <div class="flex-gap">
+      <button class="btn btn-o btn-sm" onclick="ytGetUrl()">Get auth link</button>
+      <input type="text" id="yt-code" placeholder="Paste the code from browser" style="flex:1"/>
+      <button class="btn btn-p btn-sm" onclick="ytExchange()">Connect</button>
+    </div>
+    <div id="yt-status" style="margin-top:8px;font-size:.78rem"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Upload video</div>
+    <div class="fg"><label class="fl">Video file</label>
+      <div class="drop" id="yt-drop" onclick="openFile('yt-file')">Click to choose a video file (MP4, MOV)</div>
+      <input type="file" id="yt-file" accept="video/*" onchange="setFile('yt','yt-drop')"/>
+    </div>
+    <div class="fg"><label class="fl">Title</label><input type="text" id="yt-title" placeholder="Video title"/></div>
+    <div class="fg"><label class="fl">Description</label><textarea id="yt-desc" placeholder="Description…"></textarea></div>
+    <div class="fg"><label class="fl">Privacy</label>
+      <select id="yt-priv"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select>
+    </div>
+    <button class="btn btn-p" onclick="ytUpload()">Upload</button>
+    <div id="yt-result" style="margin-top:10px;font-size:.83rem"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Community post</div>
+    <div class="fg"><textarea id="yt-community" placeholder="Post text…"></textarea></div>
+    <button class="btn btn-o" onclick="ytCommunity()">Post</button>
+    <div id="yt-community-result" style="margin-top:8px;font-size:.83rem"></div>
+  </div>
+</div>
+
+<!-- ── INSTAGRAM ── -->
+<div class="page" id="page-instagram">
+  <h1>Instagram</h1>
+  <p class="subtitle">Post photos and videos to your Instagram account.</p>
+
+  <div class="card">
+    <div class="card-title">Log in</div>
+    <div class="info info-yellow" style="margin-bottom:12px">
+      Uses your regular Instagram username and password. Works with personal and business accounts.
+    </div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Username</label><input type="text" id="ig-user" placeholder="@username"/></div>
+      <div class="fg"><label class="fl">Password</label><input type="password" id="ig-pass" placeholder="Password"/></div>
+    </div>
+    <button class="btn btn-p btn-sm" onclick="igLogin()">Log in</button>
+    <span id="ig-status" style="font-size:.78rem;margin-left:10px"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Post</div>
+    <div class="fg"><label class="fl">Type</label>
+      <select id="ig-type" onchange="igTypeChange()">
+        <option value="photo">Photo</option>
+        <option value="video">Video / Reel</option>
+      </select>
+    </div>
+    <div class="fg" id="ig-file-group">
+      <label class="fl">Photo</label>
+      <div class="drop" id="ig-drop" onclick="openFile('ig-file')">Click to choose an image</div>
+      <input type="file" id="ig-file" accept="image/*" onchange="setFile('ig','ig-drop')"/>
+    </div>
+    <div class="fg hidden" id="ig-vid-group">
+      <label class="fl">Video</label>
+      <div class="drop" id="ig-vid-drop" onclick="openFile('ig-vid-file')">Click to choose a video</div>
+      <input type="file" id="ig-vid-file" accept="video/*" onchange="setFile('ig-vid','ig-vid-drop')"/>
+    </div>
+    <div class="fg"><label class="fl">Caption</label><textarea id="ig-caption" placeholder="Caption with #hashtags…"></textarea></div>
+    <button class="btn btn-p" onclick="igPost()">Post</button>
+    <div id="ig-result" style="margin-top:8px;font-size:.83rem"></div>
+  </div>
+</div>
+
+<!-- ── IMESSAGE ── -->
+<div class="page" id="page-imessage">
+  <h1>iMessage</h1>
+  <p class="subtitle">Send iMessages via Messages.app on this Mac.</p>
+
+  <div id="im-mac-warn" class="info info-yellow hidden">iMessage is only available on macOS.</div>
+
+  <div class="card" id="im-card">
+    <div class="fg"><label class="fl">Message</label><textarea id="im-msg" placeholder="iMessage text…"></textarea></div>
+    <div class="fg">
+      <label class="fl">Recipients (one per line — phone number or Apple ID email)</label>
+      <textarea id="im-contacts" style="min-height:100px" placeholder="+14155551234&#10;someone@icloud.com"></textarea>
+    </div>
+    <button class="btn btn-p" onclick="imSend()">Send iMessages</button>
+    <div class="stats hidden" id="im-stats"></div>
+  </div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div class="page" id="page-settings">
+  <h1>Settings</h1>
+  <p class="subtitle">All preferences are saved automatically.</p>
+
+  <!-- Platforms -->
+  <div class="card">
+    <div class="card-title">Platforms</div>
+    <div id="plat-list"></div>
+  </div>
+
+  <!-- Voice -->
+  <div class="card">
+    <div class="card-title">Voice (TTS)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:.87rem;font-weight:600">Text-to-Speech</div>
+        <div style="font-size:.75rem;color:var(--muted)">Convert messages to audio before sending</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tts-on" onchange="savePref('tts_enabled',this.checked)"/><span class="slider"></span></label>
+    </div>
+    <div class="lang-grid" id="lang-grid"></div>
+    <button class="btn btn-o btn-sm" style="margin-top:10px" onclick="ttsPreview()">Preview voice</button>
+  </div>
+
+  <!-- Phone default country -->
+  <div class="card">
+    <div class="card-title">Default country code for phone numbers</div>
+    <div class="info info-blue" style="margin-bottom:10px">
+      Used to clean phone numbers in your CSV. If your contacts are mostly Indian numbers, leave as 91.
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="text" id="country-code" placeholder="91" style="width:80px"/>
+      <button class="btn btn-o btn-sm" onclick="saveCountryCode()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONTACTS ── -->
+<div class="page" id="page-contacts">
+  <h1>Contact Tracker</h1>
+  <p class="subtitle">Shows every WhatsApp contact and their preference stage.</p>
+  <div class="card">
+    <button class="btn btn-o btn-sm" onclick="loadContactPrefs()" style="margin-bottom:14px">Refresh</button>
+    <div id="contact-table"><p style="color:var(--muted);font-size:.83rem">Click Refresh to load.</p></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- QR Modal -->
+<div class="modal-bg" id="qr-modal">
+  <div class="modal">
+    <h2>Scan QR Code</h2>
+    <p>Open WhatsApp on your phone → Linked Devices → Link a Device → scan this code.</p>
+    <div class="qr-img" id="qr-img-wrap">
+      <div class="spin" style="width:30px;height:30px;border-width:3px"></div>
+    </div>
+    <button class="btn btn-o btn-sm" onclick="closeQR()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let prefs = {};
+let csvData = {}; // { wa: {contacts,skipped}, gmail: {contacts,skipped} }
+let filePaths = {}; // for native file inputs
+let waConnected = false;
+
+const LANGS = { en:"English", te:"Telugu", kn:"Kannada", ta:"Tamil", hi:"Hindi" };
+const PLATFORMS = {
+  whatsapp:  { icon:"💬", name:"WhatsApp",  note:"Scan QR code — free" },
+  gmail:     { icon:"📧", name:"Gmail",      note:"App password — free" },
+  youtube:   { icon:"▶️", name:"YouTube",   note:"OAuth — free" },
+  instagram: { icon:"📸", name:"Instagram", note:"Username/password — free" },
+  imessage:  { icon:"💬", name:"iMessage",  note:"macOS only — free" },
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  prefs = await window.api.getPreferences();
+  renderPlatforms();
+  renderLangs();
+  document.getElementById("tts-on").checked = prefs.tts_enabled;
+  document.getElementById("country-code").value = prefs.default_country_code || "91";
+
+  // Check WA status
+  const s = await window.api.whatsappStatus();
+  setWAConnected(s.connected);
+
+  // Check if iMessage available
+  if (navigator.platform.indexOf("Mac") === -1) {
+    document.getElementById("im-mac-warn").classList.remove("hidden");
+    document.getElementById("im-card").classList.add("hidden");
+  }
+
+  // Listen for events
+  window.api.on("whatsapp-qr", (dataUrl) => {
+    if (dataUrl) {
+      const img = document.createElement("img");
+      img.src = dataUrl;
+      const wrap = document.getElementById("qr-img-wrap");
+      wrap.innerHTML = "";
+      wrap.appendChild(img);
+    }
+  });
+
+  window.api.on("whatsapp-ready", () => {
+    closeQR();
+    setWAConnected(true);
+    toast("WhatsApp connected!", "ok");
+  });
+
+  window.api.on("whatsapp-disconnected", () => {
+    setWAConnected(false);
+  });
+
+  window.api.on("campaign-progress", (p) => updateProgress(p));
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function nav(page, el) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  el.classList.add("active");
+}
+
+// ── Platforms ─────────────────────────────────────────────────────────────────
+function renderPlatforms() {
+  const el = document.getElementById("plat-list");
+  el.innerHTML = Object.entries(PLATFORMS).map(([key, m]) => `
+    <div class="plat-row">
+      <div class="plat-left">
+        <span class="plat-icon">${m.icon}</span>
+        <div>
+          <div class="plat-name">${m.name}</div>
+          <div class="plat-note">${m.note}</div>
+        </div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${prefs.platforms?.[key] ? "checked" : ""}
+          onchange="togglePlat('${key}',this.checked)"/>
+        <span class="slider"></span>
+      </label>
+    </div>`).join("");
+}
+
+async function togglePlat(platform, enabled) {
+  prefs = await window.api.togglePlatform({ platform, enabled });
+  toast(`${PLATFORMS[platform].name} ${enabled ? "enabled" : "disabled"}`, "ok");
+}
+
+// ── Language ──────────────────────────────────────────────────────────────────
+function renderLangs() {
+  document.getElementById("lang-grid").innerHTML = Object.entries(LANGS).map(([code, name]) =>
+    `<button class="lang-btn ${prefs.tts_language === code ? "sel" : ""}"
+      onclick="selectLang('${code}')">${name}</button>`
+  ).join("");
+}
+
+async function selectLang(code) {
+  await savePref("tts_language", code);
+  prefs.tts_language = code;
+  renderLangs();
+  toast("Language saved", "ok");
+}
+
+async function savePref(key, value) {
+  const update = {};
+  update[key] = value;
+  prefs = await window.api.savePreferences(update);
+}
+
+async function saveCountryCode() {
+  const val = document.getElementById("country-code").value.replace(/\D/g, "");
+  await savePref("default_country_code", val || "91");
+  toast("Saved", "ok");
+}
+
+async function ttsPreview() {
+  await window.api.ttsPreview({ text: "Hello, this is a test message.", lang: prefs.tts_language || "en" });
+}
+
+// ── CSV / File ────────────────────────────────────────────────────────────────
+async function openCSV(platform) {
+  const result = await window.api.openCSVDialog();
+  if (!result) return;
+
+  csvData[platform] = result;
+  const drop = document.getElementById(platform === "wa" ? "wa-drop" : "gmail-drop");
+  const prev = document.getElementById(platform === "wa" ? "wa-preview" : "gmail-preview");
+
+  drop.textContent = `${result.contacts.length} contacts loaded (${result.skipped} skipped)`;
+  drop.classList.add("ok");
+
+  prev.classList.remove("hidden");
+  prev.innerHTML = `<strong>${result.contacts.length} valid numbers</strong>${result.skipped ? ` · ${result.skipped} skipped (unrecognised format)` : ""}<br>
+    Phone column detected: <strong>${result.phoneColumn}</strong><br>
+    Preview: ${result.preview.map(c => c.phone).join(", ")}`;
+
+  if (platform === "wa") {
+    document.getElementById("wa-send").disabled = !waConnected;
+  } else {
+    document.getElementById("g-send").disabled = false;
+  }
+}
+
+function openFile(inputId) {
+  document.getElementById(inputId).click();
+}
+
+function setFile(key, dropId) {
+  const input = document.getElementById(key + "-file") || document.getElementById(key + "-vid-file");
+  if (!input || !input.files.length) return;
+  const name = input.files[0].name;
+  document.getElementById(dropId).textContent = name;
+  document.getElementById(dropId).classList.add("ok");
+  filePaths[key] = input.files[0].path;
+}
+
+// ── WhatsApp method selector ──────────────────────────────────────────────────
+let waMethod = "qr";
+
+function selectWAMethod(method) {
+  waMethod = method;
+  document.getElementById("wa-qr-section").classList.toggle("hidden", method !== "qr");
+  document.getElementById("wa-api-section").classList.toggle("hidden", method !== "api");
+  const qrBtn  = document.getElementById("method-qr-btn");
+  const apiBtn = document.getElementById("method-api-btn");
+  qrBtn.style.border     = method === "qr"  ? "2px solid var(--accent)" : "1px solid var(--border)";
+  qrBtn.style.background = method === "qr"  ? "rgba(124,58,237,.1)"     : "transparent";
+  apiBtn.style.border    = method === "api" ? "2px solid var(--accent)" : "1px solid var(--border)";
+  apiBtn.style.background= method === "api" ? "rgba(124,58,237,.1)"     : "transparent";
+}
+
+async function waBusinessTest() {
+  const phoneId = document.getElementById("wa-phone-id").value.trim();
+  const token   = document.getElementById("wa-token").value.trim();
+  const el      = document.getElementById("wa-api-status");
+  if (!phoneId || !token) return toast("Enter Phone Number ID and token first", "err");
+  el.textContent = "Testing…";
+  const r = await window.api.waBusinessTest({ phoneId, token });
+  el.textContent = r.ok ? `✓ Connected — ${r.name}` : `✗ ${r.error}`;
+  el.style.color = r.ok ? "var(--green)" : "var(--red)";
+  if (r.ok) {
+    await window.api.savePreferences({ wa_business_phone_id: phoneId, wa_business_token: token });
+    toast("Business API connected and saved", "ok");
+  }
+}
+
+function openLink(url) {
+  if (window.api.openExternal) window.api.openExternal(url);
+}
+
+// ── WhatsApp ──────────────────────────────────────────────────────────────────
+function setWAConnected(connected) {
+  waConnected = connected;
+  document.getElementById("wa-disconnected").classList.toggle("hidden", connected);
+  document.getElementById("wa-connected").classList.toggle("hidden", !connected);
+}
+
+async function waConnect() {
+  document.getElementById("qr-modal").classList.add("show");
+  await window.api.whatsappConnect();
+}
+
+async function waDisconnect() {
+  await window.api.whatsappDisconnect();
+  setWAConnected(false);
+  toast("Disconnected", "ok");
+}
+
+function closeQR() {
+  document.getElementById("qr-modal").classList.remove("show");
+}
+
+async function waSend() {
+  const message  = document.getElementById("wa-msg").value.trim();
+  if (!message) return toast("Enter a message first", "err");
+  if (!csvData.wa?.contacts?.length) return toast("Load a CSV first", "err");
+
+  showProgress("wa", true);
+  document.getElementById("wa-send").disabled = true;
+
+  let result;
+  if (waMethod === "api") {
+    result = await window.api.waBusinessCampaign({ message, contacts: csvData.wa.contacts });
+  } else {
+    result = await window.api.whatsappCampaign({ message, contacts: csvData.wa.contacts });
+  }
+
+  showProgress("wa", false);
+  showStats("wa-stats", result);
+  document.getElementById("wa-send").disabled = false;
+}
+
+// ── Gmail ─────────────────────────────────────────────────────────────────────
+async function gmailTest() {
+  const email = document.getElementById("g-email").value.trim();
+  const pass  = document.getElementById("g-pass").value.trim();
+  const el    = document.getElementById("g-test-result");
+  el.textContent = "Testing…";
+  const r = await window.api.gmailTest({ email, appPassword: pass });
+  el.textContent = r.ok ? "✓ Connected" : `✗ ${r.error}`;
+  el.style.color = r.ok ? "var(--green)" : "var(--red)";
+  if (r.ok) {
+    await window.api.savePreferences({ gmail_address: email, gmail_app_password: pass });
+  }
+}
+
+async function gmailSend() {
+  const email   = document.getElementById("g-email").value.trim();
+  const pass    = document.getElementById("g-pass").value.trim();
+  const subject = document.getElementById("g-subject").value.trim();
+  const body    = document.getElementById("g-body").value.trim();
+
+  if (!email || !pass) return toast("Enter Gmail credentials first", "err");
+  if (!subject || !body) return toast("Fill in subject and body", "err");
+  if (!csvData.gmail?.contacts?.length) return toast("Load a CSV first", "err");
+
+  showProgress("gmail", true);
+  document.getElementById("g-send").disabled = true;
+
+  const result = await window.api.gmailCampaign({
+    email, appPassword: pass, subject, body,
+    contacts: csvData.gmail.contacts,
+  });
+
+  showProgress("gmail", false);
+  showStats("gmail-stats", result);
+  document.getElementById("g-send").disabled = false;
+}
+
+// ── YouTube ───────────────────────────────────────────────────────────────────
+async function ytGetUrl() {
+  const id     = document.getElementById("yt-id").value.trim();
+  const secret = document.getElementById("yt-secret").value.trim();
+  if (!id || !secret) return toast("Enter client ID and secret first", "err");
+  await window.api.savePreferences({ youtube_client_id: id, youtube_client_secret: secret });
+  const url = await window.api.youtubeAuthUrl();
+  document.getElementById("yt-status").innerHTML =
+    `<a href="#" onclick="openExternal('${url}')">Open this link in your browser</a>, log in, and paste the code above.`;
+}
+
+async function ytExchange() {
+  const code = document.getElementById("yt-code").value.trim();
+  if (!code) return toast("Paste the code first", "err");
+  const r = await window.api.youtubeAuthCode(code);
+  document.getElementById("yt-status").textContent = r.ok ? "✓ YouTube connected!" : `Error: ${r.error}`;
+  document.getElementById("yt-status").style.color = r.ok ? "var(--green)" : "var(--red)";
+}
+
+async function ytUpload() {
+  const videoPath = filePaths["yt"];
+  if (!videoPath) return toast("Choose a video file first", "err");
+  const r = await window.api.youtubeUpload({
+    videoPath,
+    title:       document.getElementById("yt-title").value,
+    description: document.getElementById("yt-desc").value,
+    privacy:     document.getElementById("yt-priv").value,
+  });
+  const el = document.getElementById("yt-result");
+  if (r.ok) el.innerHTML = `✓ Uploaded: <a href="#" onclick="openExternal('${r.url}')">${r.url}</a>`;
+  else      el.textContent = `Error: ${r.error}`;
+  el.style.color = r.ok ? "var(--green)" : "var(--red)";
+}
+
+async function ytCommunity() {
+  const text = document.getElementById("yt-community").value.trim();
+  if (!text) return toast("Enter post text", "err");
+  const r = await window.api.youtubeCommunity({ text });
+  const el = document.getElementById("yt-community-result");
+  el.textContent = r.ok ? "✓ Posted!" : `Error: ${r.error}`;
+  el.style.color = r.ok ? "var(--green)" : "var(--red)";
+}
+
+// ── Instagram ─────────────────────────────────────────────────────────────────
+function igTypeChange() {
+  const type = document.getElementById("ig-type").value;
+  document.getElementById("ig-file-group").classList.toggle("hidden",  type !== "photo");
+  document.getElementById("ig-vid-group").classList.toggle("hidden",   type !== "video");
+}
+
+async function igLogin() {
+  const user = document.getElementById("ig-user").value.trim();
+  const pass = document.getElementById("ig-pass").value.trim();
+  const el   = document.getElementById("ig-status");
+  el.textContent = "Logging in…";
+  const r = await window.api.instagramLogin({ username: user, password: pass });
+  el.textContent = r.ok ? "✓ Logged in" : `✗ ${r.error}`;
+  el.style.color = r.ok ? "var(--green)" : "var(--red)";
+  if (r.ok) await window.api.savePreferences({ instagram_username: user, instagram_password: pass });
+}
+
+async function igPost() {
+  const type    = document.getElementById("ig-type").value;
+  const caption = document.getElementById("ig-caption").value.trim();
+  const r = await window.api.instagramPost({
+    type,
+    imagePath: filePaths["ig"]     || null,
+    videoPath: filePaths["ig-vid"] || null,
+    caption,
+  });
+  const el = document.getElementById("ig-result");
+  el.textContent = r.ok ? "✓ Posted!" : `Error: ${r.error}`;
+  el.style.color = r.ok ? "var(--green)" : "var(--red)";
+}
+
+// ── iMessage ──────────────────────────────────────────────────────────────────
+async function imSend() {
+  const message  = document.getElementById("im-msg").value.trim();
+  const raw      = document.getElementById("im-contacts").value.trim();
+  if (!message || !raw) return toast("Fill in message and recipients", "err");
+  const contacts = raw.split("\n").map(l => l.trim()).filter(Boolean).map(l => ({ phone: l }));
+  const r = await window.api.imessageCampaign({ message, contacts });
+  showStats("im-stats", r);
+}
+
+// ── Progress / Stats ──────────────────────────────────────────────────────────
+function showProgress(platform, show) {
+  document.getElementById(platform + "-progress").classList.toggle("show", show);
+}
+
+function updateProgress(p) {
+  const pct = Math.round((p.done / p.total) * 100);
+  // Try to figure out which platform's progress this is
+  ["wa", "gmail"].forEach(platform => {
+    const fill = document.getElementById(platform + "-fill");
+    const text = document.getElementById(platform + "-prog-text");
+    if (fill) fill.style.width = pct + "%";
+    if (text) text.textContent = `${p.done} / ${p.total} · ${pct}%`;
+  });
+}
+
+function showStats(id, r) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove("hidden");
+
+  const sentDirect = r.sent_direct ?? r.sent ?? 0;
+  const awaiting   = r.awaiting_preference ?? 0;
+  const failed     = r.failed ?? 0;
+
+  let html = `<div class="stats">
+    <div class="stat"><div class="stat-v" style="color:var(--green)">${sentDirect}</div><div class="stat-l">Sent</div></div>`;
+  if (awaiting) html += `<div class="stat"><div class="stat-v" style="color:#a78bfa">${awaiting}</div><div class="stat-l">Choosing prefs</div></div>`;
+  html += `<div class="stat"><div class="stat-v" style="color:var(--red)">${failed}</div><div class="stat-l">Failed</div></div></div>`;
+  if (awaiting) html += `<p style="font-size:.75rem;color:var(--muted);margin-top:8px">"Choosing prefs" contacts received a language menu. Their message will send automatically once they choose.</p>`;
+  el.innerHTML = html;
+}
+
+// ── Contact tracker ───────────────────────────────────────────────────────────
+async function loadContactPrefs() {
+  const contacts = await window.api.getContactPrefs();
+  const el = document.getElementById("contact-table");
+  if (!contacts.length) { el.innerHTML = `<p style="color:var(--muted);font-size:.83rem">No contacts yet. Run a WhatsApp campaign first.</p>`; return; }
+
+  const stageColor = { NEW:"var(--muted)", AWAITING_LANGUAGE:"var(--yellow)", AWAITING_FORMAT:"var(--yellow)", COMPLETED:"var(--green)" };
+  el.innerHTML = `<table class="tbl">
+    <thead><tr><th>Phone</th><th>Stage</th><th>Language</th><th>Format</th><th>Opted out</th></tr></thead>
+    <tbody>${contacts.map(c => `<tr>
+      <td style="font-family:monospace">${c.phone}</td>
+      <td style="color:${c.opted_out ? "var(--red)" : stageColor[c.stage] || "var(--muted)"}">${c.opted_out ? "OPTED OUT" : c.stage}</td>
+      <td>${c.language_name || "—"}</td>
+      <td>${c.preferred_format || "—"}</td>
+      <td>${c.opted_out ? "Yes" : "No"}</td>
+    </tr>`).join("")}</tbody>
+  </table>`;
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function toast(msg, type = "ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+function openExternal(url) {
+  // Opens URLs in the default browser
+  const { shell } = require ? require("electron") : {};
+  if (shell) shell.openExternal(url);
+}
+
+init();
+</script>
+</body>
+</html>
