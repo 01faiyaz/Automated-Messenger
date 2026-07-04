@@ -1,0 +1,26 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.sma.platform
+productName: SMA Platform
+icon: build/icon
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.icns
+  category: public.app-category.productivity
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+files: []
+electronVersion: 29.4.6
